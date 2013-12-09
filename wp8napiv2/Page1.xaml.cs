@@ -15,14 +15,12 @@ namespace wp8napiv2
 {
     public partial class Page1 : PhoneApplicationPage
     {
+        bool addSub = false;
+        bool tap = false;
+
         public Page1()
         {
             InitializeComponent();
-        }
-
-        private void Play()
-        {
-
         }
 
         private void setSubs()
@@ -133,7 +131,12 @@ namespace wp8napiv2
 
         private void myPlayer_MarkerReached(object sender, TimelineMarkerRoutedEventArgs e)
         {
-            subs.Text = e.Marker.Text.ToString().Replace("|", "\n");
+            if (!tap)
+            {
+                addSub = true;
+                subs.Text = e.Marker.Text.ToString().Replace("|", "\n");
+                addSub = false;
+            }
             //MessageBox.Show(e.Marker.Text);
         }
 
@@ -146,12 +149,17 @@ namespace wp8napiv2
 
         private void myPlayer_Tap(object sender, System.Windows.Input.GestureEventArgs e)
         {
-            myPlayer.MarkerReached -= new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
+            //myPlayer.MarkerReached -= new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
+            tap = true;
+            if (!addSub)
+            {
 
-            if (myPlayer.CurrentState == MediaElementState.Playing) myPlayer.Pause();
-            if (myPlayer.CurrentState == MediaElementState.Paused || myPlayer.CurrentState == MediaElementState.Stopped) myPlayer.Play();
+                if (myPlayer.CurrentState == MediaElementState.Playing) myPlayer.Pause();
+                if (myPlayer.CurrentState == MediaElementState.Paused || myPlayer.CurrentState == MediaElementState.Stopped) myPlayer.Play();
+            }
 
-            subs.Text = "";
+            tap = false;
+            //subs.Text = "";
             //MessageBox.Show(myPlayer.Markers.Count.ToString());
             //myPlayer.MarkerReached += new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
         }
@@ -159,7 +167,7 @@ namespace wp8napiv2
         private void myPlayer_CurrentStateChanged(object sender, RoutedEventArgs e)
         {
             //myPlayer.MarkerReached -= new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
-            myPlayer.MarkerReached += new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
+            //myPlayer.MarkerReached += new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
         }
 
         private void myPlayer_Hold(object sender, System.Windows.Input.GestureEventArgs e)
