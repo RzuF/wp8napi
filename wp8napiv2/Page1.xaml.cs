@@ -18,6 +18,10 @@ namespace wp8napiv2
         bool addSub = false;
         bool tap = false;
 
+        TimeSpan pos = new TimeSpan(0, 0, 0, 0, 0);
+
+        Uri patch_g;
+
         public Page1()
         {
             InitializeComponent();
@@ -123,7 +127,11 @@ namespace wp8napiv2
 
             //MessageBox.Show("Przed filmem");
 
+
+
             myPlayer.Source = new Uri(patch, UriKind.RelativeOrAbsolute);
+
+            patch_g = myPlayer.Source;
             //myPlayer.Pause();
 
             //setSubs();
@@ -144,6 +152,8 @@ namespace wp8napiv2
         {
             setSubs();
 
+            myPlayer.Position = pos;
+
             //MessageBox.Show("Opened");
         }
 
@@ -154,8 +164,8 @@ namespace wp8napiv2
             if (!addSub)
             {
 
-                if (myPlayer.CurrentState == MediaElementState.Playing) myPlayer.Pause();
-                if (myPlayer.CurrentState == MediaElementState.Paused || myPlayer.CurrentState == MediaElementState.Stopped) myPlayer.Play();
+                if (myPlayer.CurrentState == MediaElementState.Playing) { myPlayer.Markers.Clear(); myPlayer.Pause(); }
+                if (myPlayer.CurrentState == MediaElementState.Paused || myPlayer.CurrentState == MediaElementState.Stopped) { pos = myPlayer.Position; myPlayer.Source = patch_g; }
             }
 
             tap = false;
