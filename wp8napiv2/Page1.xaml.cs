@@ -127,8 +127,6 @@ namespace wp8napiv2
 
             //MessageBox.Show("Przed filmem");
 
-
-
             myPlayer.Source = new Uri(patch, UriKind.RelativeOrAbsolute);
 
             patch_g = myPlayer.Source;
@@ -139,12 +137,7 @@ namespace wp8napiv2
 
         private void myPlayer_MarkerReached(object sender, TimelineMarkerRoutedEventArgs e)
         {
-            if (!tap)
-            {
-                addSub = true;
                 subs.Text = e.Marker.Text.ToString().Replace("|", "\n");
-                addSub = false;
-            }
             //MessageBox.Show(e.Marker.Text);
         }
 
@@ -153,37 +146,12 @@ namespace wp8napiv2
             setSubs();
 
             myPlayer.Position = pos;
-
-            //MessageBox.Show("Opened");
         }
 
         private void myPlayer_Tap(object sender, System.Windows.Input.GestureEventArgs e)
         {
-            //myPlayer.MarkerReached -= new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
-            tap = true;
-            if (!addSub)
-            {
-
-                if (myPlayer.CurrentState == MediaElementState.Playing) { myPlayer.Markers.Clear(); myPlayer.Pause(); }
-                if (myPlayer.CurrentState == MediaElementState.Paused || myPlayer.CurrentState == MediaElementState.Stopped) { pos = myPlayer.Position; myPlayer.Source = patch_g; }
-            }
-
-            tap = false;
-            //subs.Text = "";
-            //MessageBox.Show(myPlayer.Markers.Count.ToString());
-            //myPlayer.MarkerReached += new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
-        }
-
-        private void myPlayer_CurrentStateChanged(object sender, RoutedEventArgs e)
-        {
-            //myPlayer.MarkerReached -= new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
-            //myPlayer.MarkerReached += new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
-        }
-
-        private void myPlayer_Hold(object sender, System.Windows.Input.GestureEventArgs e)
-        {
-            MessageBox.Show(myPlayer.Markers.Count.ToString());
-            myPlayer.MarkerReached += new TimelineMarkerRoutedEventHandler(myPlayer_MarkerReached);
+            if (myPlayer.CurrentState == MediaElementState.Playing) { myPlayer.Markers.Clear(); myPlayer.Pause(); }
+            if (myPlayer.CurrentState == MediaElementState.Paused || myPlayer.CurrentState == MediaElementState.Stopped) { pos = myPlayer.Position; myPlayer.Source = patch_g; }
         }
     }
 }
