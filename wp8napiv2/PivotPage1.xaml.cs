@@ -11,6 +11,7 @@ using Microsoft.Phone.Shell;
 using Microsoft.Phone.Storage;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.IO.IsolatedStorage;
 using Cimbalino.Phone.Toolkit.Extensions;
 using System.Text;
 
@@ -25,7 +26,9 @@ namespace wp8napiv2
 
         public static string postData, htmlData, napisy, file_patch;
 
-        public bool testing = true; // BOOL FOR TESTS, NEED TO BE DELETED IN FULL APP
+        public bool download = true;
+
+        //public bool testing = true; // BOOL FOR TESTS, NEED TO BE DELETED IN FULL APP
 
         public PivotPage1()
         {
@@ -80,46 +83,92 @@ namespace wp8napiv2
             }
         }
 
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            string x;
+
+            NavigationContext.QueryString.TryGetValue("dow",out x);
+
+            if (x == "false") download = false;
+        }
+
         private void ListBox_SelectionChanged_files(object sender, SelectionChangedEventArgs e)
         {
-            //ListBox lb = (ListBox)sender; <==== FOR TESTING !!!
+            ListBox lb = (ListBox)sender;// <==== FOR TESTING !!!
 
-            if (//lb.SelectedItem != null <==== FOR TESTING !!!
-                 testing
+            if (lb.SelectedItem != null //<==== FOR TESTING !!!
+                 //testing
                 )
             {
-                //ExternalStorageFile patch = (ExternalStorageFile)lb.SelectedItem; <==== FOR TESTING !!!
+                ExternalStorageFile patch = (ExternalStorageFile)lb.SelectedItem; //<==== FOR TESTING !!!
 
-                //FileStream file = File.OpenRead(patch.Path); <==== FOR TESTING !!!
-                FileStream file = File.OpenRead("Resources/twd402.mp4");
+                FileStream file = File.OpenRead(patch.Path); //<==== FOR TESTING !!!
+                //FileStream file = File.OpenRead("Resources/twd402.mp4");
 
-                byte[] file_byte = new byte[10485760];
-
-                file.Read(file_byte, 0, 10485760);
-
-                byte[] data = file_byte.ComputeMD5Hash();
-
-                StringBuilder sBuilder = new StringBuilder();
-
-                // Loop through each byte of the hashed data  
-                // and format each one as a hexadecimal string. 
-                for (int i = 0; i < data.Length; i++)
+                if (download)
                 {
-                    sBuilder.Append(data[i].ToString("x2"));
+                    byte[] file_byte = new byte[10485760];
+
+                    file.Read(file_byte, 0, 10485760);
+
+                    byte[] data = file_byte.ComputeMD5Hash();
+
+                    StringBuilder sBuilder = new StringBuilder();
+
+                    // Loop through each byte of the hashed data  
+                    // and format each one as a hexadecimal string. 
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        sBuilder.Append(data[i].ToString("x2"));
+                    }
+
+                    // Return the hexadecimal string. 
+
+                    //MessageBox.Show(sBuilder.ToString());
+
+                    postData = "mode=1&" + 
+                    "client=NapiProjektPython&" + 
+                    "client_ver=0.1&" +
+                    "downloaded_subtitles_lang=PL&" + 
+                    "downloaded_subtitles_txt=1&" +
+                    "downloaded_subtitles_id=" + sBuilder.ToString();
+                    file_patch = file.Name;
+
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://napiprojekt.pl/api/api-napiprojekt3.php");
+                    request.ContentType = "application/x-www-form-urlencoded";
+                    request.Method = "POST";
+
+                    request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), request);
                 }
+                else
+                {
+                    try
+                    {
+                        using (var store = IsolatedStorageFile.GetUserStoreForApplication())
+                        {
+                            try
+                            {
+                                using (StreamReader sr = new StreamReader(store.OpenFile(file_patch.Substring(file_patch.LastIndexOf("/")), FileMode.Open, FileAccess.Read)))
+                                {
+                                    napisy = sr.ReadToEnd();
+                                }
+                            }
+                            catch (IsolatedStorageException ex)
+                            {
+                                MessageBox.Show(ex.Message);
+                            }
+                        }
+                    }
+                    catch (IsolatedStorageException ex)
+                    {
+                        MessageBox.Show(ex.Message);
 
-                // Return the hexadecimal string. 
+                    }
 
-                //MessageBox.Show(sBuilder.ToString());
-
-                postData = "mode=1&client=NapiProjektPython&client_ver=0.1&downloaded_subtitles_lang=PL&downloaded_subtitles_txt=1&downloaded_subtitles_id=" + sBuilder.ToString();
-                file_patch = file.Name;
-
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://napiprojekt.pl/api/api-napiprojekt3.php");
-                request.ContentType = "application/x-www-form-urlencoded";
-                request.Method = "POST";
-
-                request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), request);
+                    NavigationService.Navigate(new Uri("/Page1.xaml?patch=" + file.Name, UriKind.Relative));
+                }
             }
         }
 
@@ -172,16 +221,52 @@ namespace wp8napiv2
         {
             //MessageBox.Show("2");
 
-            int startIndex = htmlData.IndexOf("<content><![CDATA[") + 18;
-            int endIndex = htmlData.IndexOf("]]></content>", startIndex);
-            string todecode = htmlData.Substring(startIndex, endIndex - startIndex);
+            if (htmlData.Contains("<subtitles>"))
+            {
 
-            byte[] data = Convert.FromBase64String(todecode);
-            napisy = UTF8Encoding.UTF8.GetString(data, 0, data.Length);
+                int startIndex = htmlData.IndexOf("<content><![CDATA[") + 18;
+                int endIndex = htmlData.IndexOf("]]></content>", startIndex);
+                string todecode = htmlData.Substring(startIndex, endIndex - startIndex);
 
-            //MessageBox.Show(napisy);
+                byte[] data = Convert.FromBase64String(todecode);
+                napisy = UTF8Encoding.UTF8.GetString(data, 0, data.Length);
 
-            NavigationService.Navigate(new Uri("/Page1.xaml?patch=" + file_patch, UriKind.Relative));
+                try
+                {
+                    using(var store = IsolatedStorageFile.GetUserStoreForApplication())
+                    {
+                        //store.CreateDirectory("wp8subs");
+
+                        store.CreateFile(file_patch.Substring(file_patch.LastIndexOf("/")));
+
+                        try
+                        {
+                            using( StreamWriter sw = new StreamWriter(store.OpenFile(file_patch.Substring(file_patch.LastIndexOf("/")), FileMode.Open, FileAccess.Write)))
+                            {
+                                sw.Write(napisy);
+                            }
+                        }
+                        catch (IsolatedStorageException ex) 
+                        {
+                            MessageBox.Show(ex.Message); 
+                        }
+                    }
+                }
+                catch (IsolatedStorageException ex)
+                {
+                    MessageBox.Show(ex.Message);
+
+                }
+
+                //MessageBox.Show(napisy);
+
+                NavigationService.Navigate(new Uri("/Page2.xaml?patch=" + file_patch, UriKind.Relative));
+            }
+            else
+            {
+                MessageBox.Show("Nie znaleziono napisów.");
+                NavigationService.Navigate(new Uri("/MainPage.xaml", UriKind.Relative));
+            }
         }
 
         private void For_tests(object sender, RoutedEventArgs e)

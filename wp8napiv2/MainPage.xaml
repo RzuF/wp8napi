@@ -51,18 +51,30 @@
 
 
         <Grid>
-            <Grid VerticalAlignment="Center">
+            <Grid>
 
-                <Button Content="Pobierz napisy" VerticalAlignment="Top" VerticalContentAlignment="Top">
+
+                <Button Content="Pobierz napisy" Height="140" Margin="0,107,0,233" FontSize="48">
                     <i:Interaction.Triggers>
                         <i:EventTrigger EventName="Click">
                             <ec:NavigateToPageAction TargetPage="/PivotPage1.xaml"/>
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                 </Button>
-                <Button Content="O Aplikacji" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom" Margin="0,0,0,-72" Height="72"/>
+                <Button Content="Odtwórz plik" VerticalContentAlignment="Top" Height="72" Margin="0,247,0,161" Click="Button_Click"/>
+                <Button Content="O Aplikacji" VerticalContentAlignment="Bottom" Height="72" Margin="0,319,0,89">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="Click">
+                            <ec:NavigateToPageAction TargetPage="/Page3.xaml"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </Button>
+
+
 
             </Grid>
+
+
 
         </Grid>
 

@@ -50,7 +50,7 @@
             </phone:PivotItem>
         </phone:Pivot>
         <Button x:Name="Refresh" Content="Odświerz" Height="70" VerticalAlignment="Bottom" Click="Refresh_Click"></Button>
-        <Button x:Name="Testuj" Content="Test" Height="70" VerticalAlignment="Bottom" Click="For_tests"  Margin="0,0,0,57"></Button>
+        <!--<Button x:Name="Testuj" Content="Test" Height="70" VerticalAlignment="Bottom" Click="For_tests"  Margin="0,0,0,57"></Button>-->
     </Grid>
 
 </phone:PhoneApplicationPage>

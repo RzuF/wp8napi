@@ -17,7 +17,7 @@
     <Grid x:Name="LayoutRoot" Background="Transparent" RenderTransformOrigin="0.5,0.5">
 
 
-        <MediaElement Name="myPlayer" MarkerReached="myPlayer_MarkerReached" MediaOpened="myPlayer_MediaOpened" Tap="myPlayer_Tap" Hold="myPlayer_Hold"/>
+        <MediaElement Name="myPlayer" MarkerReached="myPlayer_MarkerReached" MediaOpened="myPlayer_MediaOpened" Tap="myPlayer_Tap"/>
         <TextBlock x:Name="subs" TextWrapping="Wrap" Text="" VerticalAlignment="Bottom" Width="728" Canvas.ZIndex="1" TextAlignment="Center"/>
     </Grid>
 
