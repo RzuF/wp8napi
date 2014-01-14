@@ -127,6 +127,8 @@ namespace wp8napiv2
 
             //MessageBox.Show("Przed filmem");
 
+            MessageBox.Show(patch);
+
             myPlayer.Source = new Uri(patch, UriKind.RelativeOrAbsolute);
 
             patch_g = myPlayer.Source;

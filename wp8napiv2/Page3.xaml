@@ -27,7 +27,15 @@
 
         <!--ContentPanel - place additional content here-->
         <Grid x:Name="ContentPanel" Grid.Row="1" Margin="12,0,12,0">
-            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Text="  O aplikacji: Mobilna wersja desktopowego projektu o nazwie NapiProjekt na platformę Windows Phone 8.  Autor: RzuF  Strona: rzuf.zxy.me  Wersja: 1.0"/>
+            <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Top" Text="
+
+O aplikacji: Mobilna wersja desktopowego projektu o nazwie NapiProjekt na platformę Windows Phone 8.
+
+Autor: RzuF
+
+Strona: rzuf.zxy.me
+
+Wersja: 1.0"/>
 
         </Grid>
     </Grid>

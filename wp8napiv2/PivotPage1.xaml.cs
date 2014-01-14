@@ -19,8 +19,8 @@ namespace wp8napiv2
 {
     public partial class PivotPage1 : PhoneApplicationPage
     {
-        public ObservableCollection<ExternalStorageFile> files;
-        public ObservableCollection<ExternalStorageFolder> folders;
+        public ObservableCollection<ExternalStorageFile> files {get;set;}
+        public ObservableCollection<ExternalStorageFolder> folders{get;set;}
 
         public ExternalStorageFolder current_folder;
 
@@ -33,6 +33,11 @@ namespace wp8napiv2
         public PivotPage1()
         {
             InitializeComponent();
+
+            files = new ObservableCollection<ExternalStorageFile>();
+            folders = new ObservableCollection<ExternalStorageFolder>();
+
+            this.DataContext = this;
         }
 
         private async void Pivot_Loaded(object sender, RoutedEventArgs e)
@@ -68,7 +73,7 @@ namespace wp8napiv2
                 }
             }
 
-            catch (Exception w) { MessageBox.Show(w.Message); } // Tu sie cos kiedys napisze
+            catch (Exception w) { MessageBox.Show(w.Message + "\n\n#1"); } // Tu sie cos kiedys napisze
 
 
         }
@@ -94,80 +99,102 @@ namespace wp8napiv2
             if (x == "false") download = false;
         }
 
-        private void ListBox_SelectionChanged_files(object sender, SelectionChangedEventArgs e)
+        private async void ListBox_SelectionChanged_files(object sender, SelectionChangedEventArgs e)
         {
             ListBox lb = (ListBox)sender;// <==== FOR TESTING !!!
 
             if (lb.SelectedItem != null //<==== FOR TESTING !!!
-                 //testing
+                //testing
                 )
             {
                 ExternalStorageFile patch = (ExternalStorageFile)lb.SelectedItem; //<==== FOR TESTING !!!
 
-                FileStream file = File.OpenRead(patch.Path); //<==== FOR TESTING !!!
+                //FileStream file = File.OpenRead(patch.Path); //<==== FOR TESTING !!!
                 //FileStream file = File.OpenRead("Resources/twd402.mp4");
 
-                if (download)
-                {
-                    byte[] file_byte = new byte[10485760];
+                MessageBox.Show(patch.Path);
 
-                    file.Read(file_byte, 0, 10485760);
+                ExternalStorageDevice sdCard = (await ExternalStorage.GetExternalStorageDevicesAsync()).FirstOrDefault();
 
-                    byte[] data = file_byte.ComputeMD5Hash();
-
-                    StringBuilder sBuilder = new StringBuilder();
-
-                    // Loop through each byte of the hashed data  
-                    // and format each one as a hexadecimal string. 
-                    for (int i = 0; i < data.Length; i++)
-                    {
-                        sBuilder.Append(data[i].ToString("x2"));
-                    }
-
-                    // Return the hexadecimal string. 
-
-                    //MessageBox.Show(sBuilder.ToString());
-
-                    postData = "mode=1&" + 
-                    "client=NapiProjektPython&" + 
-                    "client_ver=0.1&" +
-                    "downloaded_subtitles_lang=PL&" + 
-                    "downloaded_subtitles_txt=1&" +
-                    "downloaded_subtitles_id=" + sBuilder.ToString();
-                    file_patch = file.Name;
-
-                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://napiprojekt.pl/api/api-napiprojekt3.php");
-                    request.ContentType = "application/x-www-form-urlencoded";
-                    request.Method = "POST";
-
-                    request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), request);
-                }
-                else
+                // If the SD card is present, get the route from the SD card.
+                if (sdCard != null)
                 {
                     try
                     {
-                        using (var store = IsolatedStorageFile.GetUserStoreForApplication())
+                        // Get the route (.GPX file) from the SD card.
+                        //ExternalStorageFile filex = await sdCard.GetFileAsync(patch.Path);
+
+                        // Create a stream for the route.
+                        Stream file = await patch.OpenForReadAsync();
+
+                        if (download)
+                        {
+                            byte[] file_byte = new byte[10485760];
+
+                            file.Read(file_byte, 0, 10485760);
+
+                            byte[] data = file_byte.ComputeMD5Hash();
+
+                            StringBuilder sBuilder = new StringBuilder();
+
+                            // Loop through each byte of the hashed data  
+                            // and format each one as a hexadecimal string. 
+                            for (int i = 0; i < data.Length; i++)
+                            {
+                                sBuilder.Append(data[i].ToString("x2"));
+                            }
+
+                            // Return the hexadecimal string. 
+
+                            //MessageBox.Show(sBuilder.ToString());
+
+                            postData = "mode=1&" +
+                            "client=NapiProjektPython&" +
+                            "client_ver=0.1&" +
+                            "downloaded_subtitles_lang=PL&" +
+                            "downloaded_subtitles_txt=1&" +
+                            "downloaded_subtitles_id=" + sBuilder.ToString();
+                            file_patch = patch.Name;
+
+                            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("http://napiprojekt.pl/api/api-napiprojekt3.php");
+                            request.ContentType = "application/x-www-form-urlencoded";
+                            request.Method = "POST";
+
+                            request.BeginGetRequestStream(new AsyncCallback(GetRequestStreamCallback), request);
+                        }
+                        else
                         {
                             try
                             {
-                                using (StreamReader sr = new StreamReader(store.OpenFile(file_patch.Substring(file_patch.LastIndexOf("/")), FileMode.Open, FileAccess.Read)))
+                                using (var store = IsolatedStorageFile.GetUserStoreForApplication())
                                 {
-                                    napisy = sr.ReadToEnd();
+                                    try
+                                    {
+                                        using (StreamReader sr = new StreamReader(store.OpenFile(file_patch.Substring(file_patch.LastIndexOf("/")), FileMode.Open, FileAccess.Read)))
+                                        {
+                                            napisy = sr.ReadToEnd();
+                                        }
+                                    }
+                                    catch (IsolatedStorageException ex)
+                                    {
+                                        MessageBox.Show(ex.Message);
+                                    }
                                 }
                             }
                             catch (IsolatedStorageException ex)
                             {
                                 MessageBox.Show(ex.Message);
+
                             }
+
+                            NavigationService.Navigate(new Uri("/Page1.xaml?patch=" + patch.Name, UriKind.Relative));
                         }
                     }
-                    catch (IsolatedStorageException ex)
+                    catch (FileNotFoundException)
                     {
-                        MessageBox.Show(ex.Message);
-
+                        // The route is not present on the SD card.
+                        MessageBox.Show("Błąd!");
                     }
-
-                    NavigationService.Navigate(new Uri("/Page1.xaml?patch=" + file.Name, UriKind.Relative));
                 }
             }
         }
@@ -237,30 +264,39 @@ namespace wp8napiv2
                     {
                         //store.CreateDirectory("wp8subs");
 
-                        store.CreateFile(file_patch.Substring(file_patch.LastIndexOf("/")));
+                        string f_name;
+
+                        //file_patch.Substring(file_patch.LastIndexOf("/"))
+
+                        if (file_patch.LastIndexOf("/") > 0) f_name = file_patch.Substring(file_patch.LastIndexOf("/"));
+                        else f_name = file_patch;
+
+                        store.CreateFile(f_name);
 
                         try
                         {
-                            using( StreamWriter sw = new StreamWriter(store.OpenFile(file_patch.Substring(file_patch.LastIndexOf("/")), FileMode.Open, FileAccess.Write)))
+                            using( StreamWriter sw = new StreamWriter(store.OpenFile(f_name, FileMode.Open, FileAccess.Write)))
                             {
                                 sw.Write(napisy);
                             }
                         }
                         catch (IsolatedStorageException ex) 
                         {
-                            MessageBox.Show(ex.Message); 
+                            MessageBox.Show(ex.Message + "\n\n#2"); 
                         }
                     }
                 }
                 catch (IsolatedStorageException ex)
                 {
-                    MessageBox.Show(ex.Message);
+                    MessageBox.Show(ex.Message + "\n\n#3");
 
                 }
 
                 //MessageBox.Show(napisy);
 
-                NavigationService.Navigate(new Uri("/Page2.xaml?patch=" + file_patch, UriKind.Relative));
+                //NavigationService.Navigate(new Uri("/Page2.xaml?patch=" + file_patch, UriKind.Relative));
+                NavigationService.Navigate(new Uri("/Page1.xaml?patch=" + file_patch, UriKind.Relative));
+
             }
             else
             {
